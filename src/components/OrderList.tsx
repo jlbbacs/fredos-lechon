@@ -15,7 +15,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -23,7 +23,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
     return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
     });
   };
 
@@ -33,7 +33,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -56,7 +56,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
   };
 
   const updateEditForm = (field: keyof Order, value: string) => {
-    setEditForm(prev => ({ ...prev, [field]: value }));
+    setEditForm((prev) => ({ ...prev, [field]: value }));
   };
 
   if (orders.length === 0) {
@@ -72,9 +72,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-orange-100 overflow-hidden">
       <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Orders ({orders.length})
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-900">Orders ({orders.length})</h3>
       </div>
 
       <div className="divide-y divide-gray-200">
@@ -85,9 +83,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Customer Name
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
                     <input
                       type="text"
                       value={editForm.name || ''}
@@ -95,14 +91,15 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Contact Number
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₱)</label>
                     <input
-                      type="tel"
-                      value={editForm.contactNumber || ''}
-                      onChange={(e) => updateEditForm('contactNumber', e.target.value)}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={editForm.amount !== undefined ? String(editForm.amount) : ''}
+                      onChange={(e) => updateEditForm('amount', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
@@ -110,9 +107,16 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Pick-up Date
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                    <input
+                      type="tel"
+                      value={editForm.contactNumber || ''}
+                      onChange={(e) => updateEditForm('contactNumber', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Pick-up Date</label>
                     <input
                       type="date"
                       value={editForm.date || ''}
@@ -120,10 +124,11 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Pick-up Time
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Pick-up Time</label>
                     <input
                       type="time"
                       value={editForm.pickupTime || ''}
@@ -131,46 +136,41 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <div className="flex space-x-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          value="Cook"
+                          checked={editForm.status === 'Cook'}
+                          onChange={(e) => updateEditForm('status', e.target.value)}
+                          className="h-4 w-4 text-orange-500 focus:ring-orange-500"
+                        />
+                        <span className="ml-2 text-gray-700">Cook</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          value="Pick-up Already"
+                          checked={editForm.status === 'Pick-up Already'}
+                          onChange={(e) => updateEditForm('status', e.target.value)}
+                          className="h-4 w-4 text-orange-500 focus:ring-orange-500"
+                        />
+                        <span className="ml-2 text-gray-700">Pick-up Already</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Remarks
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
                   <textarea
                     value={editForm.remarks || ''}
                     onChange={(e) => updateEditForm('remarks', e.target.value)}
                     rows={2}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <div className="flex space-x-4">
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        value="Cook"
-                        checked={editForm.status === 'Cook'}
-                        onChange={(e) => updateEditForm('status', e.target.value)}
-                        className="h-4 w-4 text-orange-500 focus:ring-orange-500"
-                      />
-                      <span className="ml-2 text-gray-700">Cook</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        value="Pick-up Already"
-                        checked={editForm.status === 'Pick-up Already'}
-                        onChange={(e) => updateEditForm('status', e.target.value)}
-                        className="h-4 w-4 text-orange-500 focus:ring-orange-500"
-                      />
-                      <span className="ml-2 text-gray-700">Pick-up Already</span>
-                    </label>
-                  </div>
                 </div>
 
                 <div className="flex space-x-3 pt-2">
@@ -212,6 +212,10 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                       <Clock className="h-4 w-4 mr-2 text-gray-400" />
                       <span>{formatTime(order.pickupTime)}</span>
                     </div>
+                    <div className="flex items-center text-gray-700">
+                      <span className="font-semibold mr-1">Amount:</span>
+                      <span>₱{order.amount}</span>
+                    </div>
                   </div>
 
                   {/* Remarks */}
@@ -232,9 +236,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                 <div className="flex items-center space-x-3 mt-4 lg:mt-0">
                   <span
                     className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                      order.status === 'Cook'
-                        ? 'bg-orange-100 text-orange-800'
-                        : 'bg-green-100 text-green-800'
+                      order.status === 'Cook' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
                     }`}
                   >
                     {order.status === 'Cook' ? (

@@ -9,10 +9,11 @@ interface CustomerFormProps {
 const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
   const [formData, setFormData] = useState({
     name: '',
+    amount: '',
     contactNumber: '',
     date: '',
     pickupTime: '',
-    remarks: ''
+    remarks: '',
   });
   const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -23,6 +24,12 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
 
     if (!formData.name.trim()) {
       newErrors.name = 'Customer name is required';
+    }
+
+    if (!formData.amount.trim()) {
+      newErrors.amount = 'Amount is required';
+    } else if (isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) {
+      newErrors.amount = 'Please enter a valid positive amount';
     }
 
     if (!formData.contactNumber.trim()) {
@@ -52,13 +59,13 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Mark all fields as touched to show validation errors
+
     setTouched({
       name: true,
+      amount: true,
       contactNumber: true,
       date: true,
-      pickupTime: true
+      pickupTime: true,
     });
 
     if (!validateForm()) {
@@ -69,20 +76,21 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
       id: Date.now().toString(),
       ...formData,
       status: 'Cook', // Default status for new orders
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     onAddOrder(newOrder);
-    
+
     // Reset form
     setFormData({
       name: '',
+      amount: '',
       contactNumber: '',
       date: '',
       pickupTime: '',
-      remarks: ''
+      remarks: '',
     });
-    
+
     setTouched({});
     setErrors({});
     setShowSuccess(true);
@@ -90,24 +98,29 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: '' }));
     }
   };
 
   const handleBlur = (field: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
+    setTouched((prev) => ({ ...prev, [field]: true }));
     validateForm();
   };
 
   const isFormValid = () => {
-    return formData.name.trim() && 
-           formData.contactNumber.trim() && 
-           formData.date && 
-           formData.pickupTime;
+    return (
+      formData.name.trim() &&
+      formData.amount.trim() &&
+      !isNaN(Number(formData.amount)) &&
+      Number(formData.amount) > 0 &&
+      formData.contactNumber.trim() &&
+      formData.date &&
+      formData.pickupTime
+    );
   };
 
   return (
@@ -144,6 +157,31 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
               <p className="text-red-500 text-sm mt-1 flex items-center">
                 <span className="inline-block w-1 h-1 bg-red-500 rounded-full mr-2"></span>
                 {errors.name}
+              </p>
+            )}
+          </div>
+
+          {/* Amount Field */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Amount (₱) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={formData.amount}
+              onChange={(e) => handleInputChange('amount', e.target.value)}
+              onBlur={() => handleBlur('amount')}
+              className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors ${
+                errors.amount && touched.amount ? 'border-red-300 bg-red-50' : 'border-gray-200'
+              }`}
+              placeholder="Enter amount e.g. 6500"
+            />
+            {errors.amount && touched.amount && (
+              <p className="text-red-500 text-sm mt-1 flex items-center">
+                <span className="inline-block w-1 h-1 bg-red-500 rounded-full mr-2"></span>
+                {errors.amount}
               </p>
             )}
           </div>

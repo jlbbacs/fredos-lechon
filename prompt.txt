@@ -1,0 +1,53 @@
+Final App Prompt (Organized for Development Use)
+Create a React.js web application to manage lechon pick-up orders.
+
+Customer Order Form
+Customers can fill out the following details:
+
+Name
+
+Contact Number
+
+Pick-Up Date
+
+Remarks
+
+Tinae (dropdown with choices:
+
+Paklay
+
+Sampayna
+
+Kwaon)
+
+Note: Customers are not allowed to select or change the order status.
+
+Admin Panel Features
+The admin panel should include the following capabilities:
+
+View all submitted orders
+
+Filter orders by:
+
+Day
+
+Month
+
+Year
+
+Edit the order status using a dropdown with the following options:
+
+Being Prepared
+
+Cooking
+
+Picked Up
+
+Export or print the filtered records for documentation or reports
+
+General Requirements
+Clean and simple UI
+
+Admin access should be restricted
+
+Focus on ease of use for both customers and admin

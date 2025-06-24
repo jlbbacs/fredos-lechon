@@ -1,5 +1,6 @@
 export interface Order {
   id: string;
+  amount:string;
   name: string;
   contactNumber: string;
   date: string;
