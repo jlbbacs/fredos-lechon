@@ -1,6 +1,6 @@
 export interface Order {
   id: string;
-  amount: string;                 // Total amount due, e.g. "5000"
+  amount: string;            // Total amount due
   name: string;
   contactNumber: string;
   date: string;
@@ -8,8 +8,16 @@ export interface Order {
   remarks: string;
   status: 'Cook' | 'Pick-up Already';
   createdAt: string;
-
   paymentStatus: 'Not Paid' | 'Partially Paid' | 'Paid';
-  partialPaymentAmount?: string;  // Amount already paid if partially paid
-  balance: string;                // amount still owed, e.g. "3500"
+  balance: string;           // Amount still owed (e.g. "500.00"), zero if fully paid
+  partialPaymentAmount?: string;  // Amount already paid if partially paid (e.g. "1000.00")
+   tinae: 'Paklay' | 'Sampayna' | 'Kwaon';
+}
+
+export interface FilterOptions {
+  day?: string;
+  month?: string;
+  year?: string;
+  status?: 'all' | 'Cook' | 'Pick-up Already';
+  paymentStatus?: 'all' | 'Not Paid' | 'Partially Paid' | 'Paid';
 }

@@ -17,6 +17,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
     pickupTime: '',
     remarks: '',
     paymentStatus: 'Not Paid', // Default payment status
+    tinae: 'Paklay',           // Default tinae selection
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
@@ -96,6 +97,11 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
       }
     }
 
+    // Tinae validation (optional, as there's a default)
+    if (!formData.tinae) {
+      newErrors.tinae = 'Tinae is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -111,6 +117,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
       date: true,
       pickupTime: true,
       paymentStatus: true,
+      tinae: true,
     });
 
     if (!validateForm()) return;
@@ -127,7 +134,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
       balance: formData.balance,
       status: 'Cook',
       createdAt: new Date().toISOString(),
-      partialPaymentAmount: formData.partialPaymentAmount, // include this in Order if you want to save it
+      partialPaymentAmount: formData.partialPaymentAmount,
+      tinae: formData.tinae as Order['tinae'],
     };
 
     onAddOrder(newOrder);
@@ -143,6 +151,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
       pickupTime: '',
       remarks: '',
       paymentStatus: 'Not Paid',
+      tinae: 'Paklay',
     });
 
     setTouched({});
@@ -181,7 +190,10 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
         Number(formData.partialPaymentAmount) >= 0 &&
         Number(formData.partialPaymentAmount) < Number(formData.amount));
 
-    return baseValid && partialPaymentValid;
+    // Tinae is required - always selected by default, so usually true
+    const tinaeValid = !!formData.tinae;
+
+    return baseValid && partialPaymentValid && tinaeValid;
   };
 
   return (
@@ -334,6 +346,31 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
               <p className="text-red-500 text-sm mt-1 flex items-center">
                 <span className="inline-block w-1 h-1 bg-red-500 rounded-full mr-2"></span>
                 {errors.contactNumber}
+              </p>
+            )}
+          </div>
+
+          {/* Tinae Dropdown */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Tinae <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={formData.tinae}
+              onChange={(e) => handleInputChange('tinae', e.target.value)}
+              onBlur={() => handleBlur('tinae')}
+              className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors ${
+                errors.tinae && touched.tinae ? 'border-red-300 bg-red-50' : 'border-gray-200'
+              }`}
+            >
+              <option value="Paklay">Paklay</option>
+              <option value="Sampayna">Sampayna</option>
+              <option value="Kwaon">Kwaon</option>
+            </select>
+            {errors.tinae && touched.tinae && (
+              <p className="text-red-500 text-sm mt-1 flex items-center">
+                <span className="inline-block w-1 h-1 bg-red-500 rounded-full mr-2"></span>
+                {errors.tinae}
               </p>
             )}
           </div>

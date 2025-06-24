@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, Phone, User, FileText, ChefHat, Package, Edit, Save, X } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  Phone,
+  User,
+  FileText,
+  ChefHat,
+  Package,
+  Edit,
+  Save,
+  X,
+} from 'lucide-react';
 import { Order } from '../types/Order';
 
 interface OrderListProps {
@@ -11,31 +22,28 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
   const [editingOrder, setEditingOrder] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Order>>({});
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
     });
-  };
 
-  const formatTime = (timeString: string) => {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
+  const formatTime = (timeString: string) =>
+    new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
     });
-  };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
+  const formatDateTime = (dateString: string) =>
+    new Date(dateString).toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
 
   const startEditing = (order: Order) => {
     setEditingOrder(order.id);
@@ -77,12 +85,18 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
 
       <div className="divide-y divide-gray-200">
         {orders.map((order) => (
-          <div key={order.id} className="p-6 hover:bg-gray-50 transition-colors print:hover:bg-white">
+          <div
+            key={order.id}
+            className="p-6 hover:bg-gray-50 transition-colors print:hover:bg-white"
+          >
             {editingOrder === order.id ? (
               <div className="space-y-4">
+                {/* Name & Amount */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Customer Name
+                    </label>
                     <input
                       type="text"
                       value={editForm.name || ''}
@@ -91,7 +105,9 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₱)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Amount (₱)
+                    </label>
                     <input
                       type="number"
                       min="0"
@@ -103,9 +119,12 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                   </div>
                 </div>
 
+                {/* Contact Number & Date */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Contact Number
+                    </label>
                     <input
                       type="tel"
                       value={editForm.contactNumber || ''}
@@ -114,7 +133,9 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Pick-up Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Pick-up Date
+                    </label>
                     <input
                       type="date"
                       value={editForm.date || ''}
@@ -124,9 +145,12 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                   </div>
                 </div>
 
+                {/* Pick-up Time & Status */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Pick-up Time</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Pick-up Time
+                    </label>
                     <input
                       type="time"
                       value={editForm.pickupTime || ''}
@@ -153,9 +177,13 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                   </div>
                 </div>
 
+                {/* Payment Status & Tinae */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  {/* Payment Status */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Payment Status
+                    </label>
                     <div className="flex space-x-4">
                       {['Not Paid', 'Partially Paid', 'Paid'].map((status) => (
                         <label key={status} className="flex items-center">
@@ -172,38 +200,58 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                     </div>
                   </div>
 
-                  {editForm.paymentStatus === 'Partially Paid' && (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Balance (₱)</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={editForm.balance !== undefined ? editForm.balance : ''}
-                          onChange={(e) => updateEditForm('balance', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Partial Payment (₱)</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={
-                            editForm.amount && editForm.balance
-                              ? (Number(editForm.amount) - Number(editForm.balance)).toFixed(2)
-                              : ''
-                          }
-                          readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
-                        />
-                      </div>
-                    </>
-                  )}
+                  {/* Tinae Dropdown */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tinae</label>
+                    <select
+                      value={editForm.tinae || 'Paklay'}
+                      onChange={(e) => updateEditForm('tinae', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      <option value="Paklay">Paklay</option>
+                      <option value="Sampayna">Sampayna</option>
+                      <option value="Kwaon">Kwaon</option>
+                    </select>
+                  </div>
                 </div>
 
+                {/* Balance & Partial Payment if Partially Paid */}
+                {editForm.paymentStatus === 'Partially Paid' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Balance (₱)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={editForm.balance !== undefined ? editForm.balance : ''}
+                        onChange={(e) => updateEditForm('balance', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Partial Payment (₱)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={
+                          editForm.amount && editForm.balance
+                            ? (Number(editForm.amount) - Number(editForm.balance)).toFixed(2)
+                            : ''
+                        }
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Remarks */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
                   <textarea
@@ -214,6 +262,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                   />
                 </div>
 
+                {/* Save & Cancel Buttons */}
                 <div className="flex space-x-3 pt-2">
                   <button
                     onClick={saveOrder}
@@ -251,6 +300,13 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                       <Clock className="h-4 w-4 mr-2 text-gray-400" />
                       <span>{formatTime(order.pickupTime)}</span>
                     </div>
+
+                    {/* Tinae display */}
+                    <div className="flex items-center text-gray-700">
+                      <span className="font-semibold mr-1">Tinae:</span>
+                      <span>{order.tinae}</span>
+                    </div>
+
                     <div className="flex items-center text-gray-700">
                       <span className="font-semibold mr-1">Amount:</span>
                       <span>₱{order.amount}</span>
@@ -288,7 +344,9 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                 <div className="flex items-center space-x-3 mt-4 lg:mt-0">
                   <span
                     className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                      order.status === 'Cook' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
+                      order.status === 'Cook'
+                        ? 'bg-orange-100 text-orange-800'
+                        : 'bg-green-100 text-green-800'
                     }`}
                   >
                     {order.status === 'Cook' ? (
