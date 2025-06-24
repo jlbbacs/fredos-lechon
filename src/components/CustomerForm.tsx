@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Phone, Calendar, Clock, FileText, ChefHat, CheckCircle } from 'lucide-react';
 import { Order } from '../types/Order';
 
@@ -10,14 +10,42 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
   const [formData, setFormData] = useState({
     name: '',
     amount: '',
+    partialPaymentAmount: '',  // New field for partial payment
+    balance: '0',              // Computed balance
     contactNumber: '',
     date: '',
     pickupTime: '',
     remarks: '',
+    paymentStatus: 'Not Paid', // Default payment status
   });
+
   const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  // Update balance and paymentStatus dynamically
+  useEffect(() => {
+    const total = Number(formData.amount || 0);
+    const paid = Number(formData.partialPaymentAmount || 0);
+
+    let balance = total - paid;
+    if (balance < 0) balance = 0;
+
+    // Update balance in state without triggering infinite loop
+    setFormData((prev) => ({
+      ...prev,
+      balance: balance.toFixed(2),
+    }));
+
+    // Update paymentStatus automatically based on payment amounts
+    if (paid === 0) {
+      setFormData((prev) => ({ ...prev, paymentStatus: 'Not Paid' }));
+    } else if (paid >= total) {
+      setFormData((prev) => ({ ...prev, paymentStatus: 'Paid', partialPaymentAmount: total.toString() }));
+    } else {
+      setFormData((prev) => ({ ...prev, paymentStatus: 'Partially Paid' }));
+    }
+  }, [formData.amount, formData.partialPaymentAmount]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -53,6 +81,21 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
       newErrors.pickupTime = 'Pick-up time is required';
     }
 
+    if (!formData.paymentStatus) {
+      newErrors.paymentStatus = 'Payment status is required';
+    }
+
+    // Validate partial payment amount if partially paid
+    if (formData.paymentStatus === 'Partially Paid') {
+      if (!formData.partialPaymentAmount.trim()) {
+        newErrors.partialPaymentAmount = 'Partial payment amount is required';
+      } else if (isNaN(Number(formData.partialPaymentAmount)) || Number(formData.partialPaymentAmount) < 0) {
+        newErrors.partialPaymentAmount = 'Please enter a valid non-negative amount';
+      } else if (Number(formData.partialPaymentAmount) >= Number(formData.amount)) {
+        newErrors.partialPaymentAmount = 'Partial payment must be less than total amount';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -63,32 +106,43 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
     setTouched({
       name: true,
       amount: true,
+      partialPaymentAmount: true,
       contactNumber: true,
       date: true,
       pickupTime: true,
+      paymentStatus: true,
     });
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     const newOrder: Order = {
       id: Date.now().toString(),
-      ...formData,
-      status: 'Cook', // Default status for new orders
+      name: formData.name,
+      amount: formData.amount,
+      contactNumber: formData.contactNumber,
+      date: formData.date,
+      pickupTime: formData.pickupTime,
+      remarks: formData.remarks,
+      paymentStatus: formData.paymentStatus as Order['paymentStatus'],
+      balance: formData.balance,
+      status: 'Cook',
       createdAt: new Date().toISOString(),
+      partialPaymentAmount: formData.partialPaymentAmount, // include this in Order if you want to save it
     };
 
     onAddOrder(newOrder);
 
-    // Reset form
+    // Reset form after submit
     setFormData({
       name: '',
       amount: '',
+      partialPaymentAmount: '',
+      balance: '0',
       contactNumber: '',
       date: '',
       pickupTime: '',
       remarks: '',
+      paymentStatus: 'Not Paid',
     });
 
     setTouched({});
@@ -100,7 +154,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: '' }));
     }
@@ -112,15 +165,23 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
   };
 
   const isFormValid = () => {
-    return (
+    const baseValid =
       formData.name.trim() &&
       formData.amount.trim() &&
       !isNaN(Number(formData.amount)) &&
       Number(formData.amount) > 0 &&
       formData.contactNumber.trim() &&
       formData.date &&
-      formData.pickupTime
-    );
+      formData.pickupTime;
+
+    const partialPaymentValid =
+      formData.paymentStatus !== 'Partially Paid' ||
+      (formData.partialPaymentAmount.trim() &&
+        !isNaN(Number(formData.partialPaymentAmount)) &&
+        Number(formData.partialPaymentAmount) >= 0 &&
+        Number(formData.partialPaymentAmount) < Number(formData.amount));
+
+    return baseValid && partialPaymentValid;
   };
 
   return (
@@ -185,6 +246,73 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
               </p>
             )}
           </div>
+
+          {/* Payment Status Field */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Payment Status <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={formData.paymentStatus}
+              onChange={(e) => handleInputChange('paymentStatus', e.target.value)}
+              onBlur={() => handleBlur('paymentStatus')}
+              className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors ${
+                errors.paymentStatus && touched.paymentStatus ? 'border-red-300 bg-red-50' : 'border-gray-200'
+              }`}
+            >
+              <option value="Not Paid">Not Paid</option>
+              <option value="Partially Paid">Partially Paid</option>
+              <option value="Paid">Paid</option>
+            </select>
+            {errors.paymentStatus && touched.paymentStatus && (
+              <p className="text-red-500 text-sm mt-1 flex items-center">
+                <span className="inline-block w-1 h-1 bg-red-500 rounded-full mr-2"></span>
+                {errors.paymentStatus}
+              </p>
+            )}
+          </div>
+
+          {/* Partial Payment Amount Field - only if Partially Paid */}
+          {formData.paymentStatus === 'Partially Paid' && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Partial Payment Amount (₱) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.partialPaymentAmount}
+                onChange={(e) => handleInputChange('partialPaymentAmount', e.target.value)}
+                onBlur={() => handleBlur('partialPaymentAmount')}
+                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors ${
+                  errors.partialPaymentAmount && touched.partialPaymentAmount ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                }`}
+                placeholder="Enter partial payment amount"
+              />
+              {errors.partialPaymentAmount && touched.partialPaymentAmount && (
+                <p className="text-red-500 text-sm mt-1 flex items-center">
+                  <span className="inline-block w-1 h-1 bg-red-500 rounded-full mr-2"></span>
+                  {errors.partialPaymentAmount}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Balance Field - read-only */}
+          {formData.paymentStatus !== 'Not Paid' && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Balance (₱)
+              </label>
+              <input
+                type="text"
+                readOnly
+                value={formData.balance}
+                className="w-full px-4 py-3 border-2 rounded-lg bg-gray-100 cursor-not-allowed"
+              />
+            </div>
+          )}
 
           {/* Contact Number Field */}
           <div>

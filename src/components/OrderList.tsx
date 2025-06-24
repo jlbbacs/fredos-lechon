@@ -79,7 +79,6 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
         {orders.map((order) => (
           <div key={order.id} className="p-6 hover:bg-gray-50 transition-colors print:hover:bg-white">
             {editingOrder === order.id ? (
-              // Edit Mode
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -91,7 +90,6 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₱)</label>
                     <input
@@ -139,28 +137,71 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                     <div className="flex space-x-4">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          value="Cook"
-                          checked={editForm.status === 'Cook'}
-                          onChange={(e) => updateEditForm('status', e.target.value)}
-                          className="h-4 w-4 text-orange-500 focus:ring-orange-500"
-                        />
-                        <span className="ml-2 text-gray-700">Cook</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          value="Pick-up Already"
-                          checked={editForm.status === 'Pick-up Already'}
-                          onChange={(e) => updateEditForm('status', e.target.value)}
-                          className="h-4 w-4 text-orange-500 focus:ring-orange-500"
-                        />
-                        <span className="ml-2 text-gray-700">Pick-up Already</span>
-                      </label>
+                      {['Cook', 'Pick-up Already'].map((status) => (
+                        <label key={status} className="flex items-center">
+                          <input
+                            type="radio"
+                            value={status}
+                            checked={editForm.status === status}
+                            onChange={(e) => updateEditForm('status', e.target.value)}
+                            className="h-4 w-4 text-orange-500 focus:ring-orange-500"
+                          />
+                          <span className="ml-2 text-gray-700">{status}</span>
+                        </label>
+                      ))}
                     </div>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
+                    <div className="flex space-x-4">
+                      {['Not Paid', 'Partially Paid', 'Paid'].map((status) => (
+                        <label key={status} className="flex items-center">
+                          <input
+                            type="radio"
+                            value={status}
+                            checked={editForm.paymentStatus === status}
+                            onChange={(e) => updateEditForm('paymentStatus', e.target.value)}
+                            className="h-4 w-4 text-orange-500 focus:ring-orange-500"
+                          />
+                          <span className="ml-2 text-gray-700">{status}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {editForm.paymentStatus === 'Partially Paid' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Balance (₱)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={editForm.balance !== undefined ? editForm.balance : ''}
+                          onChange={(e) => updateEditForm('balance', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Partial Payment (₱)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={
+                            editForm.amount && editForm.balance
+                              ? (Number(editForm.amount) - Number(editForm.balance)).toFixed(2)
+                              : ''
+                          }
+                          readOnly
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div>
@@ -191,10 +232,8 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                 </div>
               </div>
             ) : (
-              // View Mode
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex-1 space-y-3">
-                  {/* Customer Info */}
                   <div className="flex flex-wrap items-center gap-4 text-sm">
                     <div className="flex items-center text-gray-700">
                       <User className="h-4 w-4 mr-2 text-gray-400" />
@@ -216,9 +255,24 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                       <span className="font-semibold mr-1">Amount:</span>
                       <span>₱{order.amount}</span>
                     </div>
+                    <div className="flex items-center text-gray-700">
+                      <span className="font-semibold mr-1">Payment Status:</span>
+                      <span>{order.paymentStatus}</span>
+                    </div>
+                    {order.paymentStatus === 'Partially Paid' && (
+                      <>
+                        <div className="flex items-center text-gray-700">
+                          <span className="font-semibold mr-1">Balance:</span>
+                          <span>₱{order.balance}</span>
+                        </div>
+                        <div className="flex items-center text-gray-700">
+                          <span className="font-semibold mr-1">Partial Payment:</span>
+                          <span>₱{(Number(order.amount) - Number(order.balance)).toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  {/* Remarks */}
                   {order.remarks && (
                     <div className="flex items-start text-sm text-gray-600">
                       <FileText className="h-4 w-4 mr-2 text-gray-400 mt-0.5" />
@@ -226,13 +280,11 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateOrder }) => {
                     </div>
                   )}
 
-                  {/* Created At */}
                   <div className="text-xs text-gray-500">
                     Order placed: {formatDateTime(order.createdAt)}
                   </div>
                 </div>
 
-                {/* Status and Actions */}
                 <div className="flex items-center space-x-3 mt-4 lg:mt-0">
                   <span
                     className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
