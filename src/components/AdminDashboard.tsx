@@ -6,18 +6,34 @@ import FilterPanel from './FilterPanel';
 
 interface AdminDashboardProps {
   orders: Order[];
-  onUpdateOrder: (order: Order) => void;
+  // Removed external onUpdateOrder prop, since updates handled locally now
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, onUpdateOrder }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders: initialOrders }) => {
+  const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [filters, setFilters] = useState<FilterOptions>({});
   const [showFilters, setShowFilters] = useState(false);
+
+  // Handle update order (update state locally)
+  const handleUpdateOrder = (updatedOrder: Order) => {
+    setOrders((prev) =>
+      prev.map((order) => (order.id === updatedOrder.id ? updatedOrder : order))
+    );
+  };
+
+  // Handle delete order
+  const handleDeleteOrder = (orderId: string) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this order?");
+    if (confirmDelete) {
+      setOrders((prev) => prev.filter((order) => order.id !== orderId));
+    }
+  };
 
   const filteredOrders = useMemo(() => {
     let filtered = [...orders];
 
     if (filters.day) {
-      filtered = filtered.filter(order => 
+      filtered = filtered.filter(order =>
         new Date(order.date).toISOString().split('T')[0] === filters.day
       );
     }
@@ -25,17 +41,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, onUpdateOrder }
     if (filters.month && filters.year) {
       filtered = filtered.filter(order => {
         const orderDate = new Date(order.date);
-        return orderDate.getMonth() + 1 === parseInt(filters.month!) && 
-               orderDate.getFullYear() === parseInt(filters.year!);
+        return (
+          orderDate.getMonth() + 1 === parseInt(filters.month!) &&
+          orderDate.getFullYear() === parseInt(filters.year!)
+        );
       });
     } else if (filters.year) {
-      filtered = filtered.filter(order => 
+      filtered = filtered.filter(order =>
         new Date(order.date).getFullYear() === parseInt(filters.year!)
       );
     }
 
     if (filters.status && filters.status !== 'all') {
       filtered = filtered.filter(order => order.status === filters.status);
+    }
+
+    if (filters.paymentStatus && filters.paymentStatus !== 'all') {
+      filtered = filtered.filter(order => order.paymentStatus === filters.paymentStatus);
     }
 
     return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -45,7 +67,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, onUpdateOrder }
     const total = filteredOrders.length;
     const cooking = filteredOrders.filter(order => order.status === 'Cook').length;
     const pickedUp = filteredOrders.filter(order => order.status === 'Pick-up Already').length;
-    
+
     return { total, cooking, pickedUp };
   }, [filteredOrders]);
 
@@ -135,7 +157,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, onUpdateOrder }
       )}
 
       {/* Orders List */}
-      <OrderList orders={filteredOrders} onUpdateOrder={onUpdateOrder} />
+      <OrderList
+        orders={filteredOrders}
+        onUpdateOrder={handleUpdateOrder}
+        onDeleteOrder={handleDeleteOrder}
+      />
     </div>
   );
 };
