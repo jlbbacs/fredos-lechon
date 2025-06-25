@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { Order } from "../types/Order";
+
 interface OrderListProps {
   orders: Order[];
   onUpdateOrder: (order: Order) => void;
@@ -26,9 +27,10 @@ const OrderList: React.FC<OrderListProps> = ({
   const [editingOrder, setEditingOrder] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Order>>({});
   const [detailsOrder, setDetailsOrder] = useState<Order | null>(null);
-  const [deleteForm, setDeleteForm] = useState<Order | null>(null);
+  const [deleteOrder, setDeleteOrder] = useState<Order | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Formatters
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -52,6 +54,7 @@ const OrderList: React.FC<OrderListProps> = ({
       minute: "2-digit",
     });
 
+  // Edit handlers
   const startEditing = (order: Order) => {
     setEditingOrder(order.id);
     setEditForm(order);
@@ -74,21 +77,23 @@ const OrderList: React.FC<OrderListProps> = ({
     setEditForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Open details modal
+  // Details modal handlers
   const openDetails = (order: Order) => {
     setDetailsOrder(order);
   };
-  // Delete Order
-  const handleDeleteOrder = (orderId: string) => {
-    onDeleteOrder(orderId); // Use the prop
+  const closeDetails = () => setDetailsOrder(null);
+
+  // Delete confirmation handlers
+  const confirmDelete = (order: Order) => setDeleteOrder(order);
+  const cancelDelete = () => setDeleteOrder(null);
+  const proceedDelete = () => {
+    if (deleteOrder) {
+      onDeleteOrder(deleteOrder.id);
+      setDeleteOrder(null);
+    }
   };
 
-  // Close details modal
-  const closeDetails = () => {
-    setDetailsOrder(null);
-  };
-
-  // Print details
+  // Print details modal content
   const printDetails = () => {
     if (!printRef.current) return;
     const printContents = printRef.current.innerHTML;
@@ -96,16 +101,14 @@ const OrderList: React.FC<OrderListProps> = ({
     document.body.innerHTML = printContents;
     window.print();
     document.body.innerHTML = originalContents;
-    window.location.reload(); // reload to rebind React events
+    window.location.reload();
   };
 
   if (orders.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-lg border border-orange-100 p-12 text-center">
         <ChefHat className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          No Orders Found
-        </h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Found</h3>
         <p className="text-gray-500">No orders match your current filters.</p>
       </div>
     );
@@ -115,9 +118,7 @@ const OrderList: React.FC<OrderListProps> = ({
     <>
       <div className="bg-white rounded-2xl shadow-lg border border-orange-100 overflow-hidden">
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Orders ({orders.length})
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900">Orders ({orders.length})</h3>
         </div>
 
         <div className="divide-y divide-gray-200">
@@ -128,7 +129,7 @@ const OrderList: React.FC<OrderListProps> = ({
             >
               {editingOrder === order.id ? (
                 <div className="space-y-4">
-                  {/* === YOUR FULL EDIT FORM (UNCHANGED) === */}
+                  {/* Edit form */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -150,13 +151,9 @@ const OrderList: React.FC<OrderListProps> = ({
                         min="0"
                         step="0.01"
                         value={
-                          editForm.amount !== undefined
-                            ? String(editForm.amount)
-                            : ""
+                          editForm.amount !== undefined ? String(editForm.amount) : ""
                         }
-                        onChange={(e) =>
-                          updateEditForm("amount", e.target.value)
-                        }
+                        onChange={(e) => updateEditForm("amount", e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       />
                     </div>
@@ -170,9 +167,7 @@ const OrderList: React.FC<OrderListProps> = ({
                       <input
                         type="tel"
                         value={editForm.contactNumber || ""}
-                        onChange={(e) =>
-                          updateEditForm("contactNumber", e.target.value)
-                        }
+                        onChange={(e) => updateEditForm("contactNumber", e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       />
                     </div>
@@ -197,9 +192,7 @@ const OrderList: React.FC<OrderListProps> = ({
                       <input
                         type="time"
                         value={editForm.pickupTime || ""}
-                        onChange={(e) =>
-                          updateEditForm("pickupTime", e.target.value)
-                        }
+                        onChange={(e) => updateEditForm("pickupTime", e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       />
                     </div>
@@ -214,9 +207,7 @@ const OrderList: React.FC<OrderListProps> = ({
                               type="radio"
                               value={status}
                               checked={editForm.status === status}
-                              onChange={(e) =>
-                                updateEditForm("status", e.target.value)
-                              }
+                              onChange={(e) => updateEditForm("status", e.target.value)}
                               className="h-4 w-4 text-orange-500 focus:ring-orange-500"
                             />
                             <span className="ml-2 text-gray-700">{status}</span>
@@ -232,27 +223,18 @@ const OrderList: React.FC<OrderListProps> = ({
                         Payment Status
                       </label>
                       <div className="flex space-x-4">
-                        {["Not Paid", "Partially Paid", "Paid"].map(
-                          (status) => (
-                            <label key={status} className="flex items-center">
-                              <input
-                                type="radio"
-                                value={status}
-                                checked={editForm.paymentStatus === status}
-                                onChange={(e) =>
-                                  updateEditForm(
-                                    "paymentStatus",
-                                    e.target.value
-                                  )
-                                }
-                                className="h-4 w-4 text-orange-500 focus:ring-orange-500"
-                              />
-                              <span className="ml-2 text-gray-700">
-                                {status}
-                              </span>
-                            </label>
-                          )
-                        )}
+                        {["Not Paid", "Partially Paid", "Paid"].map((status) => (
+                          <label key={status} className="flex items-center">
+                            <input
+                              type="radio"
+                              value={status}
+                              checked={editForm.paymentStatus === status}
+                              onChange={(e) => updateEditForm("paymentStatus", e.target.value)}
+                              className="h-4 w-4 text-orange-500 focus:ring-orange-500"
+                            />
+                            <span className="ml-2 text-gray-700">{status}</span>
+                          </label>
+                        ))}
                       </div>
                     </div>
 
@@ -262,9 +244,7 @@ const OrderList: React.FC<OrderListProps> = ({
                       </label>
                       <select
                         value={editForm.tinae || "Paklay"}
-                        onChange={(e) =>
-                          updateEditForm("tinae", e.target.value)
-                        }
+                        onChange={(e) => updateEditForm("tinae", e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       >
                         <option value="Paklay">Paklay</option>
@@ -284,14 +264,8 @@ const OrderList: React.FC<OrderListProps> = ({
                           type="number"
                           min="0"
                           step="0.01"
-                          value={
-                            editForm.balance !== undefined
-                              ? editForm.balance
-                              : ""
-                          }
-                          onChange={(e) =>
-                            updateEditForm("balance", e.target.value)
-                          }
+                          value={editForm.balance !== undefined ? editForm.balance : ""}
+                          onChange={(e) => updateEditForm("balance", e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                         />
                       </div>
@@ -305,10 +279,7 @@ const OrderList: React.FC<OrderListProps> = ({
                           step="0.01"
                           value={
                             editForm.amount && editForm.balance
-                              ? (
-                                  Number(editForm.amount) -
-                                  Number(editForm.balance)
-                                ).toFixed(2)
+                              ? (Number(editForm.amount) - Number(editForm.balance)).toFixed(2)
                               : ""
                           }
                           readOnly
@@ -324,9 +295,7 @@ const OrderList: React.FC<OrderListProps> = ({
                     </label>
                     <textarea
                       value={editForm.remarks || ""}
-                      onChange={(e) =>
-                        updateEditForm("remarks", e.target.value)
-                      }
+                      onChange={(e) => updateEditForm("remarks", e.target.value)}
                       rows={2}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
                     />
@@ -350,6 +319,7 @@ const OrderList: React.FC<OrderListProps> = ({
                   </div>
                 </div>
               ) : (
+                // Display order info
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex-1 space-y-3">
                     <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -370,7 +340,6 @@ const OrderList: React.FC<OrderListProps> = ({
                         <span>{formatTime(order.pickupTime)}</span>
                       </div>
 
-                      {/* Tinae display */}
                       <div className="flex items-center text-gray-700">
                         <span className="font-semibold mr-1">Tinae:</span>
                         <span>{order.tinae}</span>
@@ -381,9 +350,7 @@ const OrderList: React.FC<OrderListProps> = ({
                         <span>₱{order.amount}</span>
                       </div>
                       <div className="flex items-center text-gray-700">
-                        <span className="font-semibold mr-1">
-                          Payment Status:
-                        </span>
+                        <span className="font-semibold mr-1">Payment Status:</span>
                         <span>{order.paymentStatus}</span>
                       </div>
                       {order.paymentStatus === "Partially Paid" && (
@@ -393,14 +360,10 @@ const OrderList: React.FC<OrderListProps> = ({
                             <span>₱{order.balance}</span>
                           </div>
                           <div className="flex items-center text-gray-700">
-                            <span className="font-semibold mr-1">
-                              Partial Payment:
-                            </span>
+                            <span className="font-semibold mr-1">Partial Payment:</span>
                             <span>
                               ₱
-                              {(
-                                Number(order.amount) - Number(order.balance)
-                              ).toFixed(2)}
+                              {(Number(order.amount) - Number(order.balance)).toFixed(2)}
                             </span>
                           </div>
                         </>
@@ -435,7 +398,6 @@ const OrderList: React.FC<OrderListProps> = ({
                       {order.status}
                     </span>
 
-                    {/* Edit button */}
                     <button
                       onClick={() => startEditing(order)}
                       className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors print:hidden"
@@ -444,16 +406,15 @@ const OrderList: React.FC<OrderListProps> = ({
                       Edit
                     </button>
 
-                    {/* View Details button */}
                     <button
                       onClick={() => openDetails(order)}
                       className="inline-flex items-center px-3 py-1 border border-blue-500 rounded-lg text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 transition-colors print:hidden"
                     >
                       View Details
                     </button>
-                    {/* delete button */}
+
                     <button
-                      onClick={() => handleDeleteOrder(order.id)}
+                      onClick={() => confirmDelete(order)}
                       className="inline-flex items-center px-3 py-1 border border-red-500 rounded-lg text-sm font-medium text-red-700 bg-white hover:bg-red-50 transition-colors print:hidden"
                     >
                       Delete
@@ -466,7 +427,7 @@ const OrderList: React.FC<OrderListProps> = ({
         </div>
       </div>
 
-      {/* Modal for details */}
+      {/* Details Modal */}
       {detailsOrder && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -474,7 +435,7 @@ const OrderList: React.FC<OrderListProps> = ({
         >
           <div
             className="bg-white rounded-lg p-6 max-w-lg w-full shadow-lg relative"
-            onClick={(e) => e.stopPropagation()} // prevent closing modal on inner click
+            onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-xl font-semibold mb-4">Order Details</h2>
 
@@ -489,8 +450,7 @@ const OrderList: React.FC<OrderListProps> = ({
                 <strong>Pick-up Date:</strong> {formatDate(detailsOrder.date)}
               </p>
               <p>
-                <strong>Pick-up Time:</strong>{" "}
-                {formatTime(detailsOrder.pickupTime)}
+                <strong>Pick-up Time:</strong> {formatTime(detailsOrder.pickupTime)}
               </p>
               <p>
                 <strong>Status:</strong> {detailsOrder.status}
@@ -511,9 +471,9 @@ const OrderList: React.FC<OrderListProps> = ({
                   </p>
                   <p>
                     <strong>Partial Payment:</strong> ₱
-                    {(
-                      Number(detailsOrder.amount) - Number(detailsOrder.balance)
-                    ).toFixed(2)}
+                    {(Number(detailsOrder.amount) - Number(detailsOrder.balance)).toFixed(
+                      2
+                    )}
                   </p>
                 </>
               )}
@@ -522,8 +482,8 @@ const OrderList: React.FC<OrderListProps> = ({
                   <strong>Remarks:</strong> {detailsOrder.remarks}
                 </p>
               )}
-              <p className="text-xs text-gray-500">
-                Order placed: {formatDateTime(detailsOrder.createdAt)}
+              <p className="text-sm text-gray-500">
+                Order Placed: {formatDateTime(detailsOrder.createdAt)}
               </p>
             </div>
 
@@ -536,9 +496,42 @@ const OrderList: React.FC<OrderListProps> = ({
               </button>
               <button
                 onClick={closeDetails}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors font-medium"
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-colors font-medium"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteOrder && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={cancelDelete}
+        >
+          <div
+            className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-semibold mb-4">Confirm Delete</h2>
+            <p>
+              Are you sure you want to delete the order for{" "}
+              <strong>{deleteOrder.name}</strong>?
+            </p>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={proceedDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-medium"
+              >
+                Delete
+              </button>
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-colors font-medium"
+              >
+                Cancel
               </button>
             </div>
           </div>
