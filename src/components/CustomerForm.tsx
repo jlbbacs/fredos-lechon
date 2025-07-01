@@ -28,23 +28,28 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
   useEffect(() => {
     const total = Number(formData.amount || 0);
     const paid = Number(formData.partialPaymentAmount || 0);
-
     let balance = total - paid;
     if (balance < 0) balance = 0;
 
-    // Update balance in state without triggering infinite loop
-    setFormData((prev) => ({
-      ...prev,
-      balance: balance.toFixed(2),
-    }));
-
-    // Update paymentStatus automatically based on payment amounts
     if (paid === 0) {
-      setFormData((prev) => ({ ...prev, paymentStatus: 'Not Paid' }));
+      setFormData((prev) => ({
+        ...prev,
+        balance: balance.toFixed(2),
+        paymentStatus: 'Not Paid',
+      }));
     } else if (paid >= total) {
-      setFormData((prev) => ({ ...prev, paymentStatus: 'Paid', partialPaymentAmount: total.toString() }));
+      setFormData((prev) => ({
+        ...prev,
+        balance: '',
+        paymentStatus: 'Paid',
+        partialPaymentAmount: total.toString(),
+      }));
     } else {
-      setFormData((prev) => ({ ...prev, paymentStatus: 'Partially Paid' }));
+      setFormData((prev) => ({
+        ...prev,
+        balance: balance.toFixed(2),
+        paymentStatus: 'Partially Paid',
+      }));
     }
   }, [formData.amount, formData.partialPaymentAmount]);
 
@@ -249,7 +254,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
               className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors ${
                 errors.amount && touched.amount ? 'border-red-300 bg-red-50' : 'border-gray-200'
               }`}
-              placeholder="Enter amount e.g. 6500"
+              placeholder="Enter amount exmaple 4500"
             />
             {errors.amount && touched.amount && (
               <p className="text-red-500 text-sm mt-1 flex items-center">
@@ -311,8 +316,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
             </div>
           )}
 
-          {/* Balance Field - read-only */}
-          {formData.paymentStatus !== 'Not Paid' && (
+          {/* Balance Field - read-only, hidden if Paid */}
+          {formData.paymentStatus !== 'Paid' && (
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Balance (₱)
@@ -435,40 +440,30 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onAddOrder }) => {
               value={formData.remarks}
               onChange={(e) => handleInputChange('remarks', e.target.value)}
               rows={3}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors resize-none"
-              placeholder="Special instructions, size preferences, etc."
+              className="w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors border-gray-200"
+              placeholder="Additional notes or instructions"
             />
           </div>
 
-          {/* Required Fields Notice */}
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <p className="text-sm text-orange-700">
-              <span className="text-red-500">*</span> Required fields must be filled to place your order
-            </p>
+          {/* Submit Button */}
+          <div>
+            <button
+              type="submit"
+              disabled={!isFormValid()}
+              className={`w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-3 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed`}
+            >
+              Submit Order
+            </button>
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={!isFormValid()}
-            className={`w-full font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg ${
-              isFormValid()
-                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 transform hover:scale-[1.02] cursor-pointer'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            {isFormValid() ? 'Place Order' : 'Please Fill All Required Fields'}
-          </button>
+          {/* Success Message */}
+          {showSuccess && (
+            <div className="flex items-center text-green-600 text-lg font-semibold mt-4">
+              <CheckCircle className="mr-2" /> Order submitted successfully!
+            </div>
+          )}
         </form>
       </div>
-
-      {/* Success Message */}
-      {showSuccess && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center animate-slideInRight z-50">
-          <CheckCircle className="h-5 w-5 mr-2" />
-          Order placed successfully!
-        </div>
-      )}
     </div>
   );
 };
